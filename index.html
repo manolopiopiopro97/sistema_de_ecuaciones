@@ -2,43 +2,105 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Resolver sistema de ecuaciones</title>
+  <title>Calculadora de Sistemas de Ecuaciones</title>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 700px;
-      margin: 2em auto;
-      padding: 1em;
+    :root {
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --primary: #40739e;
+      --primary-hover: #487eb0;
+      --text: #2f3640;
+      --accent: #dcdde1;
+      --radius: 10px;
     }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 750px;
+      width: 100%;
+      background: var(--card);
+      padding: 2rem;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--primary);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
     textarea {
       width: 100%;
       height: 120px;
+      padding: 1rem;
       font-family: monospace;
+      font-size: 1rem;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      resize: vertical;
+      box-sizing: border-box;
     }
-    pre {
-      background: #f4f4f4;
-      padding: 1em;
-      overflow-x: auto;
-    }
+
     button {
-      margin-top: 1em;
-      padding: 0.6em 1.2em;
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .output {
+      margin-top: 2rem;
+      background-color: #f1f2f6;
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      white-space: pre-wrap;
+      font-family: monospace;
+      overflow-x: auto;
     }
   </style>
 </head>
 <body>
 
-  <h2>🧮 Resolver sistema de ecuaciones (con fracciones)</h2>
+  <div class="container">
+    <h1>🧮 Resolver sistemas de ecuaciones</h1>
 
-  <p>Escribe un sistema de ecuaciones (una por línea):</p>
-  <textarea id="input" placeholder="Ejemplo:
-1/2x + y = 3
-x + 1/4y = 2"></textarea>
+    <label for="input">Introduce tu sistema de ecuaciones (una por línea):</label>
+    <textarea id="input" placeholder="Ejemplo:
+2x - 6y = 4
+3x + 2y = 17"></textarea>
 
-  <button onclick="resolver()">Resolver</button>
+    <button onclick="resolver()">🔍 Resolver</button>
 
-  <h3>Resultado:</h3>
-  <pre id="output">Esperando entrada...</pre>
+    <div class="output" id="output">Esperando entrada...</div>
+  </div>
 
   <script>
     function resolver() {
@@ -56,7 +118,7 @@ x + 1/4y = 2"></textarea>
         if (Number.isInteger(decimal)) return `${decimal}`;
         let signo = decimal < 0 ? -1 : 1;
         decimal = Math.abs(decimal);
-        let num = 1, den = 1, mejorNum = 1, mejorDen = 1, minError = Math.abs(decimal - num / den);
+        let mejorNum = 1, mejorDen = 1, minError = Math.abs(decimal - 1);
         for (let d = 1; d <= maxDen; d++) {
           const n = Math.round(decimal * d);
           const error = Math.abs(decimal - n / d);
@@ -75,32 +137,24 @@ x + 1/4y = 2"></textarea>
       function determinante(matriz) {
         const tam = matriz.length;
         if (tam === 1) return matriz[0][0];
-        if (tam === 2) {
-          return matriz[0][0] * matriz[1][1] - matriz[0][1] * matriz[1][0];
-        }
+        if (tam === 2) return matriz[0][0] * matriz[1][1] - matriz[0][1] * matriz[1][0];
         let det = 0;
         for (let col = 0; col < tam; col++) {
-          const submatriz = matriz.slice(1).map(fila =>
-            fila.filter((_, j) => j !== col)
-          );
+          const submatriz = matriz.slice(1).map(fila => fila.filter((_, j) => j !== col));
           det += matriz[0][col] * determinante(submatriz) * (col % 2 === 0 ? 1 : -1);
         }
         return det;
       }
 
       function evaluarFraccion(str) {
-        if (str.includes('/')) {
-          const [num, den] = str.split('/');
-          return parseFloat(num) / parseFloat(den);
-        }
-        return parseFloat(str);
+        return str.includes("/") ? parseFloat(str.split("/")[0]) / parseFloat(str.split("/")[1]) : parseFloat(str);
       }
 
       function parseEcuacion(ec, variables) {
         ec = ec.replace(/\s+/g, "");
         const [lhs, rhs] = ec.split("=");
         let coefs = new Array(variables.length).fill(0);
-        let expresion = lhs[0] === '-' ? lhs : '+' + lhs;
+        let expresion = lhs[0] === "-" ? lhs : "+" + lhs;
         const regex = /([+-])((?:\d+\/\d+|\d+(?:\.\d+)?)*)([a-z])/g;
         let match;
         while ((match = regex.exec(expresion)) !== null) {
@@ -126,19 +180,21 @@ x + 1/4y = 2"></textarea>
       const A = matriz.map(row => row.slice(0, n));
       const B = matriz.map(row => row[n]);
 
-      let resultado = `Sistema a resolver (${n}x${n}):\n`;
+      let resultado = `🔎 Sistema de ecuaciones (${n}x${n}):\n`;
       ecuaciones.forEach(eq => resultado += eq + "\n");
 
-      resultado += `\n--- Procedimiento usando Regla de Cramer ---\n`;
+      resultado += `\n📘 Procedimiento paso a paso con la Regla de Cramer:\n`;
 
       const D = determinante(A);
-      resultado += `Determinante D = ${D}\n`;
+      resultado += `1️⃣ Calculamos el determinante de la matriz principal (D):\n   D = ${D}\n`;
 
       if (D === 0) {
-        resultado += "El sistema no tiene solución única (D = 0).\n";
+        resultado += "❌ El sistema no tiene una solución única porque D = 0.\n";
         output.textContent = resultado;
         return;
       }
+
+      resultado += `2️⃣ Como D ≠ 0, seguimos resolviendo cada variable:\n`;
 
       variables.forEach((v, i) => {
         const matriz_i = A.map((fila, f) =>
@@ -147,7 +203,7 @@ x + 1/4y = 2"></textarea>
         const Di = determinante(matriz_i);
         const valor = Di / D;
         const fraccion = decimalAFraccion(valor);
-        resultado += `\n${v} = D_${v} / D = ${Di} / ${D} = ${fraccion}`;
+        resultado += `\n🔹 ${v}:\n   Reemplazamos la columna de ${v} con los resultados:\n   D_${v} = ${Di}\n   ${v} = D_${v} / D = ${Di} / ${D} = ${fraccion}`;
       });
 
       output.textContent = resultado;

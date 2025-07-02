@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Resolver sistema de ecuaciones</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin: 2em auto;
+      padding: 1em;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      font-family: monospace;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 1em;
+      overflow-x: auto;
+    }
+    button {
+      margin-top: 1em;
+      padding: 0.6em 1.2em;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🧮 Resolver sistema de ecuaciones (con fracciones)</h2>
+
+  <p>Escribe un sistema de ecuaciones (una por línea):</p>
+  <textarea id="input" placeholder="Ejemplo:
+1/2x + y = 3
+x + 1/4y = 2"></textarea>
+
+  <button onclick="resolver()">Resolver</button>
+
+  <h3>Resultado:</h3>
+  <pre id="output">Esperando entrada...</pre>
+
+  <script>
+    function resolver() {
+      const input = document.getElementById("input").value.trim();
+      const ecuaciones = input.split("\n").filter(Boolean);
+      const output = document.getElementById("output");
+      const n = ecuaciones.length;
+
+      if (n < 1) {
+        output.textContent = "Debes ingresar al menos una ecuación.";
+        return;
+      }
+
+      function decimalAFraccion(decimal, maxDen = 10000) {
+        if (Number.isInteger(decimal)) return `${decimal}`;
+        let signo = decimal < 0 ? -1 : 1;
+        decimal = Math.abs(decimal);
+        let num = 1, den = 1, mejorNum = 1, mejorDen = 1, minError = Math.abs(decimal - num / den);
+        for (let d = 1; d <= maxDen; d++) {
+          const n = Math.round(decimal * d);
+          const error = Math.abs(decimal - n / d);
+          if (error < minError) {
+            mejorNum = n;
+            mejorDen = d;
+            minError = error;
+            if (error < 1e-10) break;
+          }
+        }
+        const mcd = (a, b) => b ? mcd(b, a % b) : a;
+        const divisor = mcd(mejorNum, mejorDen);
+        return `${signo * (mejorNum / divisor)}/${mejorDen / divisor}`;
+      }
+
+      function determinante(matriz) {
+        const tam = matriz.length;
+        if (tam === 1) return matriz[0][0];
+        if (tam === 2) {
+          return matriz[0][0] * matriz[1][1] - matriz[0][1] * matriz[1][0];
+        }
+        let det = 0;
+        for (let col = 0; col < tam; col++) {
+          const submatriz = matriz.slice(1).map(fila =>
+            fila.filter((_, j) => j !== col)
+          );
+          det += matriz[0][col] * determinante(submatriz) * (col % 2 === 0 ? 1 : -1);
+        }
+        return det;
+      }
+
+      function evaluarFraccion(str) {
+        if (str.includes('/')) {
+          const [num, den] = str.split('/');
+          return parseFloat(num) / parseFloat(den);
+        }
+        return parseFloat(str);
+      }
+
+      function parseEcuacion(ec, variables) {
+        ec = ec.replace(/\s+/g, "");
+        const [lhs, rhs] = ec.split("=");
+        let coefs = new Array(variables.length).fill(0);
+        let expresion = lhs[0] === '-' ? lhs : '+' + lhs;
+        const regex = /([+-])((?:\d+\/\d+|\d+(?:\.\d+)?)*)([a-z])/g;
+        let match;
+        while ((match = regex.exec(expresion)) !== null) {
+          const signo = match[1];
+          const num = match[2] === "" ? "1" : match[2];
+          const variable = match[3];
+          const index = variables.indexOf(variable);
+          if (index === -1) return null;
+          const valor = evaluarFraccion(num) * (signo === "-" ? -1 : 1);
+          coefs[index] += valor;
+        }
+        const constante = evaluarFraccion(rhs);
+        return [...coefs, constante];
+      }
+
+      const variables = [...new Set(ecuaciones.flatMap(eq => [...eq.matchAll(/[a-z]/g)].map(m => m[0])))];
+      if (variables.length !== n) {
+        output.textContent = `Error: número de variables (${variables.length}) no coincide con el número de ecuaciones (${n}).`;
+        return;
+      }
+
+      const matriz = ecuaciones.map(eq => parseEcuacion(eq, variables));
+      const A = matriz.map(row => row.slice(0, n));
+      const B = matriz.map(row => row[n]);
+
+      let resultado = `Sistema a resolver (${n}x${n}):\n`;
+      ecuaciones.forEach(eq => resultado += eq + "\n");
+
+      resultado += `\n--- Procedimiento usando Regla de Cramer ---\n`;
+
+      const D = determinante(A);
+      resultado += `Determinante D = ${D}\n`;
+
+      if (D === 0) {
+        resultado += "El sistema no tiene solución única (D = 0).\n";
+        output.textContent = resultado;
+        return;
+      }
+
+      variables.forEach((v, i) => {
+        const matriz_i = A.map((fila, f) =>
+          fila.map((val, c) => (c === i ? B[f] : val))
+        );
+        const Di = determinante(matriz_i);
+        const valor = Di / D;
+        const fraccion = decimalAFraccion(valor);
+        resultado += `\n${v} = D_${v} / D = ${Di} / ${D} = ${fraccion}`;
+      });
+
+      output.textContent = resultado;
+    }
+  </script>
+
+</body>
+</html>

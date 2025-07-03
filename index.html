@@ -25,6 +25,16 @@
       align-items: center;
     }
 
+    /* Estilos para la imagen del pollo */
+    .chicken-logo {
+      position: absolute; /* Permite posicionar la imagen con respecto al body o un contenedor */
+      top: 20px; /* Distancia desde la parte superior */
+      left: 20px; /* Distancia desde la izquierda */
+      width: 80px; /* Ancho de la imagen, ajusta según necesites */
+      height: auto; /* Mantiene la proporción de la imagen */
+      z-index: 1000; /* Asegura que la imagen esté por encima de otros elementos */
+    }
+
     .container {
       max-width: 750px;
       width: 100%;
@@ -88,6 +98,7 @@
   </style>
 </head>
 <body>
+  <img src="cartoon-character-chicken-T65BN4.jpg" alt="Logo de pollo" class="chicken-logo">
 
   <div class="container">
     <h1>🧮 Resolver sistemas de ecuaciones</h1>
@@ -209,12 +220,8 @@
       output.textContent = resultado;
     }
   </script>
-
-<div class="container" style="margin-top: 2rem;">
-  <button class="equation-btn" onclick="window.location.href='https://manolopiopiopro97.github.io/calculadora-de-iva/'">
-    🧾 Ir a Calculadora de IVA
-  </button>
-</div>
-
+  <div style="text-align: center; margin-top: 20px; font-size: 0.75em; color: #777;">
+    <p>Imagen de pollo cortesía de <a href="https://www.alamy.com/cartoon-character-chicken-image244752064.html" style="color: #777; text-decoration: none;">Alamy</a></p>
+  </div>
 </body>
 </html>
